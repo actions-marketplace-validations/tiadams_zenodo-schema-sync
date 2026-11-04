@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tiadams/zenodo-schema-sync/main/schema/zenodo-sync.schema.json",
+  "repository": "https://github.com/example/project",
+  "version": "v1.2.3",
+  "metadata": {
+    "title": "Project",
+    "resource_type": { "id": "software" },
+    "publication_date": "2026-09-28",
+    "rights": [{ "id": "cc-by-4.0" }],
+    "creators": [
+      {
+        "person_or_org": {
+          "type": "personal",
+          "given_name": "Jane",
+          "family_name": "Doe"
+        }
+      }
+    ]
+  },
+  "custom_fields": {
+    "code:codeRepository": "https://github.com/example/project",
+    "code:programmingLanguage": ["python"],
+    "code:developmentStatus": "active"
+  }
+}

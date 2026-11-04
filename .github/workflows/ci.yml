@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Config parses
+        run: >-
+          python -c "import sys; sys.path.insert(0, 'scripts');
+          from zenodo_sync import load_config;
+          load_config('examples/zenodo-sync.json');
+          load_config('examples/full-metadata.json')"
+      - name: Compile
+        run: python -m compileall -q scripts tests
+
+  schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate schema and examples
+        run: |
+          python -m pip install --quiet jsonschema
+          python - <<'PY'
+          import json
+
+          import jsonschema
+
+          schema = json.load(open("schema/zenodo-sync.schema.json"))
+          validator_class = jsonschema.validators.validator_for(schema)
+          validator_class.check_schema(schema)
+          validator = validator_class(schema)
+          for path in ("examples/zenodo-sync.json", "examples/full-metadata.json"):
+              validator.validate(json.load(open(path)))
+          print("schema and examples are valid")
+          PY

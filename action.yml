@@ -1,0 +1,94 @@
+name: Zenodo schema sync
+description: >-
+  Apply current-schema metadata (CodeMeta custom fields and modern metadata) to
+  a Zenodo record after a release.
+author: Tim Adams
+branding:
+  icon: refresh-cw
+  color: blue
+
+inputs:
+  mode:
+    description: "`check` is read-only and exits non-zero on drift; `sync` writes."
+    required: false
+    default: check
+  token:
+    description: >-
+      Zenodo personal access token with the deposit:write and deposit:actions
+      scopes. Not needed for `check` against public records.
+    required: false
+  config:
+    description: Path to the declaration file.
+    required: false
+    default: .github/zenodo-sync.json
+  record:
+    description: Explicit Zenodo record id. Overrides the config file.
+    required: false
+  concept:
+    description: Zenodo concept (parent) id. Overrides the config file.
+    required: false
+  repository:
+    description: Repository URL used to find the record. Overrides the config file.
+    required: false
+  version:
+    description: Release version (for example `v1.2.3`). Overrides the config file.
+    required: false
+  base-url:
+    description: Zenodo instance, for example https://sandbox.zenodo.org.
+    required: false
+    default: https://zenodo.org
+  dry-run:
+    description: Print the plan without writing, even when mode is `sync`.
+    required: false
+    default: "false"
+  publish-timeout:
+    description: Seconds to wait for a publish to become visible.
+    required: false
+    default: "300"
+
+outputs:
+  status:
+    description: One of in-sync, drift, missing, updated, created, created-version, duplicates.
+    value: ${{ steps.run.outputs.status }}
+  record-id:
+    description: The Zenodo record id that was resolved or created.
+    value: ${{ steps.run.outputs.record-id }}
+  record-url:
+    description: Human URL of that record.
+    value: ${{ steps.run.outputs.record-url }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run zenodo-sync
+      id: run
+      shell: bash
+      env:
+        ZENODO_SCHEMA_SYNC_TOKEN: ${{ inputs.token }}
+        ZENODO_SCHEMA_SYNC_MODE: ${{ inputs.mode }}
+        ZENODO_SCHEMA_SYNC_CONFIG: ${{ inputs.config }}
+        ZENODO_SCHEMA_SYNC_RECORD: ${{ inputs.record }}
+        ZENODO_SCHEMA_SYNC_CONCEPT: ${{ inputs.concept }}
+        ZENODO_SCHEMA_SYNC_REPOSITORY: ${{ inputs.repository }}
+        ZENODO_SCHEMA_SYNC_VERSION: ${{ inputs.version }}
+        ZENODO_SCHEMA_SYNC_BASE_URL: ${{ inputs.base-url }}
+        ZENODO_SCHEMA_SYNC_DRY_RUN: ${{ inputs.dry-run }}
+        ZENODO_SCHEMA_SYNC_PUBLISH_TIMEOUT: ${{ inputs.publish-timeout }}
+      run: |
+        set -euo pipefail
+        if [[ -n "$ZENODO_SCHEMA_SYNC_TOKEN" ]]; then
+          echo "::add-mask::$ZENODO_SCHEMA_SYNC_TOKEN"
+        fi
+        export ZENODO_TOKEN="$ZENODO_SCHEMA_SYNC_TOKEN"
+        args=(
+          --mode "$ZENODO_SCHEMA_SYNC_MODE"
+          --config "$ZENODO_SCHEMA_SYNC_CONFIG"
+          --base-url "$ZENODO_SCHEMA_SYNC_BASE_URL"
+          --publish-timeout "$ZENODO_SCHEMA_SYNC_PUBLISH_TIMEOUT"
+        )
+        if [[ -n "${ZENODO_SCHEMA_SYNC_RECORD:-}" ]]; then args+=(--record "$ZENODO_SCHEMA_SYNC_RECORD"); fi
+        if [[ -n "${ZENODO_SCHEMA_SYNC_CONCEPT:-}" ]]; then args+=(--concept "$ZENODO_SCHEMA_SYNC_CONCEPT"); fi
+        if [[ -n "${ZENODO_SCHEMA_SYNC_REPOSITORY:-}" ]]; then args+=(--repository "$ZENODO_SCHEMA_SYNC_REPOSITORY"); fi
+        if [[ -n "${ZENODO_SCHEMA_SYNC_VERSION:-}" ]]; then args+=(--version "$ZENODO_SCHEMA_SYNC_VERSION"); fi
+        if [[ "${ZENODO_SCHEMA_SYNC_DRY_RUN}" == "true" ]]; then args+=(--dry-run); fi
+        python3 "$GITHUB_ACTION_PATH/scripts/zenodo_sync.py" "${args[@]}"

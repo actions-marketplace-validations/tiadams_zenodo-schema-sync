@@ -1,0 +1,1117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tiadams/zenodo-schema-sync/main/schema/zenodo-sync.schema.json",
+  "title": "zenodo-sync declaration",
+  "description": "Metadata owned by zenodo-schema-sync on a Zenodo record. Only keys present here are written; everything else on the record is preserved. String shorthands are expanded to the InvenioRDM shape before writing.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "record": {
+      "description": "Explicit Zenodo record id. Mutually exclusive with concept.",
+      "type": [
+        "string",
+        "integer"
+      ]
+    },
+    "concept": {
+      "description": "Zenodo concept (parent) id; the latest version is used. Mutually exclusive with record.",
+      "type": [
+        "string",
+        "integer"
+      ]
+    },
+    "repository": {
+      "description": "Repository URL used to find the record and verify ownership.",
+      "type": "string",
+      "pattern": "^https?://[^\\s]+$"
+    },
+    "version": {
+      "description": "Release version, matched against metadata.version.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    },
+    "custom_fields": {
+      "$ref": "#/$defs/customFields"
+    },
+    "custom": {
+      "description": "Alias of custom_fields, kept for compatibility with .zenodo.json.",
+      "$ref": "#/$defs/customFields"
+    },
+    "access": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "record": {
+          "enum": [
+            "public",
+            "restricted"
+          ]
+        },
+        "files": {
+          "enum": [
+            "public",
+            "restricted"
+          ]
+        },
+        "embargo": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "active": {
+              "type": "boolean"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "until": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "active"
+          ]
+        }
+      }
+    },
+    "files": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "not": {
+    "required": [
+      "record",
+      "concept"
+    ]
+  },
+  "$defs": {
+    "vocab": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "localeText": {
+      "description": "A single-locale string; plain strings become {\"en\": ...}.",
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 1,
+          "propertyNames": {
+            "pattern": "^[a-z]{2}$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    "identifierSchemes": {
+      "enum": [
+        "ark",
+        "arxiv",
+        "ads",
+        "crossreffunderid",
+        "cstr",
+        "doi",
+        "ean13",
+        "eissn",
+        "grid",
+        "handle",
+        "igsn",
+        "isbn",
+        "isni",
+        "issn",
+        "istc",
+        "lissn",
+        "lsid",
+        "pmid",
+        "purl",
+        "rrid",
+        "upc",
+        "url",
+        "urn",
+        "wikidata",
+        "w3id",
+        "other"
+      ]
+    },
+    "identifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "identifier": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scheme": {
+          "$ref": "#/$defs/identifierSchemes"
+        }
+      },
+      "required": [
+        "identifier"
+      ]
+    },
+    "personIdentifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "identifier": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scheme": {
+          "enum": [
+            "orcid",
+            "isni",
+            "gnd",
+            "ror"
+          ]
+        }
+      },
+      "required": [
+        "identifier"
+      ]
+    },
+    "affiliation": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "name"
+          ]
+        }
+      ]
+    },
+    "person": {
+      "description": "Creator or contributor identity. Personal names need a family name (or a 'Family, Given' name); organizations need a name or given/family parts.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "personal",
+            "organizational"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "given_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "family_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "identifiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/personIdentifier"
+          }
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "personal"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "family_name"
+                ]
+              },
+              {
+                "properties": {
+                  "name": {
+                    "pattern": "^[^,]+,\\s*\\S"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "organizational"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "name"
+                ]
+              },
+              {
+                "required": [
+                  "given_name"
+                ]
+              },
+              {
+                "required": [
+                  "family_name"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "creator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "person_or_org": {
+          "$ref": "#/$defs/person"
+        },
+        "role": {
+          "$ref": "#/$defs/vocab"
+        },
+        "affiliations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/affiliation"
+          }
+        }
+      },
+      "required": [
+        "person_or_org"
+      ]
+    },
+    "contributor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "person_or_org": {
+          "$ref": "#/$defs/person"
+        },
+        "role": {
+          "$ref": "#/$defs/vocab"
+        },
+        "affiliations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/affiliation"
+          }
+        }
+      },
+      "required": [
+        "person_or_org",
+        "role"
+      ]
+    },
+    "rights": {
+      "description": "A vocabulary id, or free-text rights with a title.",
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "title": {
+              "$ref": "#/$defs/localeText"
+            },
+            "description": {
+              "$ref": "#/$defs/localeText"
+            },
+            "link": {
+              "type": "string",
+              "pattern": "^https?://[^\\s]+$"
+            }
+          },
+          "required": [
+            "title"
+          ]
+        }
+      ]
+    },
+    "funder": {
+      "description": "A Zenodo funder vocabulary id, or a free-text name.",
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "name"
+          ]
+        }
+      ]
+    },
+    "award": {
+      "description": "A vocabulary id, or an inline award with a number.",
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "number": {
+              "type": "string",
+              "minLength": 1
+            },
+            "title": {
+              "$ref": "#/$defs/localeText"
+            },
+            "identifiers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "identifier": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "scheme": {
+                    "enum": [
+                      "url",
+                      "doi"
+                    ]
+                  }
+                },
+                "required": [
+                  "identifier"
+                ]
+              }
+            }
+          },
+          "required": [
+            "number"
+          ]
+        }
+      ]
+    },
+    "reference": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "reference": {
+              "type": "string",
+              "minLength": 1
+            },
+            "identifier": {
+              "type": "string",
+              "minLength": 1
+            },
+            "scheme": {
+              "$ref": "#/$defs/identifierSchemes"
+            }
+          },
+          "required": [
+            "reference"
+          ]
+        }
+      ]
+    },
+    "subject": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "subject": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "subject"
+          ]
+        }
+      ]
+    },
+    "position": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "number"
+      }
+    },
+    "geometry": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "Point"
+            },
+            "coordinates": {
+              "$ref": "#/$defs/position"
+            }
+          },
+          "required": [
+            "type",
+            "coordinates"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "Polygon"
+            },
+            "coordinates": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "array",
+                "minItems": 4,
+                "items": {
+                  "$ref": "#/$defs/position"
+                }
+              }
+            }
+          },
+          "required": [
+            "type",
+            "coordinates"
+          ]
+        }
+      ]
+    },
+    "locationIdentifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "identifier": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scheme": {
+          "enum": [
+            "geonames",
+            "wikidata"
+          ]
+        }
+      },
+      "required": [
+        "identifier"
+      ]
+    },
+    "feature": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "geometry": {
+          "$ref": "#/$defs/geometry"
+        },
+        "place": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "identifiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/locationIdentifier"
+          }
+        }
+      }
+    },
+    "edtf": {
+      "type": "string",
+      "pattern": "^[0-9][0-9YMDX?/~.\\-/]{3,}$"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "resource_type": {
+          "$ref": "#/$defs/vocab"
+        },
+        "creators": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/creator"
+          }
+        },
+        "contributors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contributor"
+          }
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "additional_titles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 3
+              },
+              "type": {
+                "$ref": "#/$defs/vocab"
+              },
+              "lang": {
+                "$ref": "#/$defs/vocab"
+              }
+            },
+            "required": [
+              "title",
+              "type"
+            ]
+          }
+        },
+        "publisher": {
+          "type": "string",
+          "minLength": 1
+        },
+        "publication_date": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subjects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/subject"
+          }
+        },
+        "dates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "date": {
+                "$ref": "#/$defs/edtf"
+              },
+              "type": {
+                "$ref": "#/$defs/vocab"
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "date",
+              "type"
+            ]
+          }
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/vocab"
+          }
+        },
+        "identifiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "related_identifiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "minLength": 1
+              },
+              "scheme": {
+                "$ref": "#/$defs/identifierSchemes"
+              },
+              "relation_type": {
+                "$ref": "#/$defs/vocab"
+              },
+              "resource_type": {
+                "$ref": "#/$defs/vocab"
+              }
+            },
+            "required": [
+              "identifier",
+              "relation_type"
+            ]
+          }
+        },
+        "sizes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191
+        },
+        "rights": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/rights"
+          }
+        },
+        "copyright": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "additional_descriptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "description": {
+                "type": "string",
+                "minLength": 3
+              },
+              "type": {
+                "$ref": "#/$defs/vocab"
+              },
+              "lang": {
+                "$ref": "#/$defs/vocab"
+              }
+            },
+            "required": [
+              "description",
+              "type"
+            ]
+          }
+        },
+        "locations": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "features": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/feature"
+              }
+            }
+          },
+          "required": [
+            "features"
+          ]
+        },
+        "funding": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "funder": {
+                "$ref": "#/$defs/funder"
+              },
+              "award": {
+                "$ref": "#/$defs/award"
+              }
+            },
+            "required": [
+              "funder"
+            ]
+          }
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reference"
+          }
+        }
+      }
+    },
+    "domainValue": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "number"
+            ]
+          }
+        }
+      ]
+    },
+    "identifierList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "customFields": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(?:dwc:(?:associatedSequences|basisOfRecord|catalogNumber|class|collectionCode|country|countryCode|county|datasetID|dateIdentified|decimalLatitude|decimalLongitude|eventDate|eventID|family|genus|geodeticDatum|habitat|identifiedBy|individualCount|institutionCode|kingdom|lifeStage|locality|locationID|materialSampleID|namePublishedInID|namePublishedInYear|occurrenceID|occurrenceStatus|order|organismQuantity|organismQuantityType|otherCatalogNumbers|parentEventID|phylum|preparations|recordedBy|sampleSizeUnit|sampleSizeValue|samplingEffort|samplingProtocol|scientificName|scientificNameAuthorship|scientificNameID|sex|specificEpithet|stateProvince|taxonID|taxonRank|taxonomicStatus|typeStatus|verbatimElevation|verbatimEventDate)|gbif-dwc:(?:identifiedByID|recordedByID)|gbif:(?:DNA_sequence|ampliconSize|pcr_primer_forward|pcr_primer_name_forward|pcr_primer_name_reverse|pcr_primer_reverse)|mixs:(?:0000012|0000013|0000014|0000044|0000045|0000049|0000050|0000058|0000090)|ac:(?:associatedSpecimenReference|captureDevice|digitizationDate|physicalSetting|resourceCreationTechnique|subjectOrientation|subjectPart)|openbiodiv:(?:TaxonomicConceptLabel)|dc:(?:creator|rightsHolder)|(?:legacy|code|journal|meeting|imprint|thesis|obo):.+)$"
+      },
+      "properties": {
+        "code:codeRepository": {
+          "type": "string",
+          "pattern": "^https?://[^\\s<>]+$"
+        },
+        "code:programmingLanguage": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/vocab"
+          }
+        },
+        "code:developmentStatus": {
+          "$ref": "#/$defs/vocab"
+        },
+        "legacy:communities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "legacy:subjects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "term": {
+                "type": "string",
+                "minLength": 1
+              },
+              "identifier": {
+                "type": "string",
+                "minLength": 1
+              },
+              "scheme": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "term"
+            ]
+          }
+        },
+        "journal:journal": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "issue": {
+              "type": "string",
+              "minLength": 1
+            },
+            "volume": {
+              "type": "string",
+              "minLength": 1
+            },
+            "pages": {
+              "type": "string",
+              "minLength": 1
+            },
+            "issn": {
+              "type": "string",
+              "pattern": "^[0-9]{4}-?[0-9]{3}[0-9Xx]$"
+            }
+          }
+        },
+        "meeting:meeting": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "acronym": {
+              "type": "string",
+              "minLength": 1
+            },
+            "dates": {
+              "type": "string",
+              "minLength": 1
+            },
+            "place": {
+              "type": "string",
+              "minLength": 1
+            },
+            "session_part": {
+              "type": "string",
+              "minLength": 1
+            },
+            "session": {
+              "type": "string",
+              "minLength": 1
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^https?://[^\\s]+$"
+            },
+            "identifiers": {
+              "$ref": "#/$defs/identifierList"
+            }
+          }
+        },
+        "imprint:imprint": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "isbn": {
+              "type": "string",
+              "pattern": "^[0-9Xx\\s-]{10,17}$"
+            },
+            "pages": {
+              "type": "string",
+              "minLength": 1
+            },
+            "place": {
+              "type": "string",
+              "minLength": 1
+            },
+            "edition": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "thesis:thesis": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "university": {
+              "type": "string",
+              "minLength": 1
+            },
+            "department": {
+              "type": "string",
+              "minLength": 1
+            },
+            "type": {
+              "type": "string",
+              "minLength": 1
+            },
+            "date_submitted": {
+              "$ref": "#/$defs/edtf"
+            },
+            "date_defended": {
+              "$ref": "#/$defs/edtf"
+            }
+          }
+        },
+        "obo:RO_0002453": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "subject": {
+                "type": "array",
+                "items": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                }
+              },
+              "object": {
+                "type": "array",
+                "items": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "subject",
+              "object"
+            ]
+          }
+        }
+      },
+      "patternProperties": {
+        "^obo:(?!RO_0002453$).+$": {
+          "$ref": "#/$defs/domainValue"
+        },
+        "^(dwc|gbif-dwc|gbif|mixs|ac|openbiodiv|dc):.+$": {
+          "$ref": "#/$defs/domainValue"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

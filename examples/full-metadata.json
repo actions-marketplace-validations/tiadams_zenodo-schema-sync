@@ -1,0 +1,311 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tiadams/zenodo-schema-sync/main/schema/zenodo-sync.schema.json",
+  "repository": "https://github.com/example/kitchen-sink",
+  "version": "v1.2.3",
+  "access": {
+    "record": "public",
+    "files": "public",
+    "embargo": {
+      "active": false
+    }
+  },
+  "files": {
+    "enabled": true
+  },
+  "metadata": {
+    "resource_type": "software",
+    "title": "Kitchen sink example",
+    "publication_date": "2026-11-03",
+    "description": "Exercises the metadata and custom-field shapes the declaration accepts.",
+    "creators": [
+      {
+        "person_or_org": {
+          "type": "personal",
+          "name": "Doe, Jane",
+          "given_name": "Jane",
+          "family_name": "Doe",
+          "identifiers": [
+            {
+              "identifier": "0000-0002-1825-0097",
+              "scheme": "orcid"
+            }
+          ]
+        },
+        "role": "researcher",
+        "affiliations": [
+          "CERN",
+          {
+            "id": "05a28rw58"
+          },
+          {
+            "name": "ETH Zurich"
+          }
+        ]
+      },
+      {
+        "person_or_org": {
+          "type": "organizational",
+          "name": "OpenCode Collective"
+        },
+        "role": "rightsholder"
+      }
+    ],
+    "contributors": [
+      {
+        "person_or_org": {
+          "type": "personal",
+          "family_name": "Roe",
+          "given_name": "Richard"
+        },
+        "role": "editor",
+        "affiliations": [
+          "University of Vienna"
+        ]
+      }
+    ],
+    "additional_titles": [
+      {
+        "title": "A subtitle",
+        "type": "subtitle",
+        "lang": "eng"
+      },
+      {
+        "title": "Alt title",
+        "type": "alternative-title"
+      }
+    ],
+    "additional_descriptions": [
+      {
+        "description": "Methods appendix.",
+        "type": "methods",
+        "lang": "eng"
+      }
+    ],
+    "publisher": "Example Publisher",
+    "subjects": [
+      "Physics",
+      {
+        "subject": "Computer science"
+      }
+    ],
+    "dates": [
+      {
+        "date": "2024-01-01",
+        "type": "created"
+      },
+      {
+        "date": "2020/2021",
+        "type": "valid",
+        "description": "Valid range"
+      }
+    ],
+    "languages": [
+      "eng",
+      "deu"
+    ],
+    "identifiers": [
+      {
+        "identifier": "10.5281/zenodo.0000000",
+        "scheme": "doi"
+      },
+      {
+        "identifier": "https://example.org/project"
+      }
+    ],
+    "related_identifiers": [
+      {
+        "identifier": "10.5281/zenodo.0000001",
+        "scheme": "doi",
+        "relation_type": "isversionof",
+        "resource_type": "software"
+      },
+      {
+        "identifier": "https://github.com/example/kitchen-sink",
+        "relation_type": "issupplementedby"
+      }
+    ],
+    "sizes": [
+      "12 MB"
+    ],
+    "formats": [
+      "application/zip"
+    ],
+    "version": "v1.2.3",
+    "rights": [
+      "cc-by-4.0",
+      {
+        "title": "Custom licence",
+        "description": {
+          "en": "Free text licence"
+        },
+        "link": "https://example.org/licence"
+      }
+    ],
+    "copyright": "Copyright 2026 the authors",
+    "locations": {
+      "features": [
+        {
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              6.96,
+              50.94
+            ]
+          },
+          "place": "Cologne",
+          "identifiers": [
+            {
+              "identifier": "2886242",
+              "scheme": "geonames"
+            }
+          ],
+          "description": "Point feature"
+        },
+        {
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  6.9,
+                  50.9
+                ],
+                [
+                  7.0,
+                  50.9
+                ],
+                [
+                  7.0,
+                  51.0
+                ],
+                [
+                  6.9,
+                  50.9
+                ]
+              ]
+            ]
+          },
+          "place": "Triangle"
+        }
+      ]
+    },
+    "funding": [
+      {
+        "funder": {
+          "id": "00k4n6c32"
+        },
+        "award": {
+          "number": "101057090",
+          "title": {
+            "en": "Example award"
+          },
+          "identifiers": [
+            {
+              "identifier": "10.3030/101057090",
+              "scheme": "doi"
+            }
+          ]
+        }
+      },
+      {
+        "funder": {
+          "name": "Example funder"
+        },
+        "award": {
+          "number": "LOCAL-1"
+        }
+      }
+    ],
+    "references": [
+      "Project website",
+      {
+        "reference": "An article",
+        "identifier": "10.1234/example",
+        "scheme": "doi"
+      }
+    ]
+  },
+  "custom_fields": {
+    "ac:captureDevice": "Canon EOS R5",
+    "code:codeRepository": "https://github.com/example/kitchen-sink",
+    "code:developmentStatus": "active",
+    "code:programmingLanguage": [
+      "python",
+      "shell"
+    ],
+    "dc:creator": [
+      "Doe, Jane"
+    ],
+    "dwc:decimalLatitude": [
+      50.94
+    ],
+    "dwc:kingdom": [
+      "Animalia"
+    ],
+    "gbif:DNA_sequence": [
+      "ACGTACGT"
+    ],
+    "imprint:imprint": {
+      "title": "Book of Tests",
+      "isbn": "978-3-16-148410-0",
+      "pages": "1-100",
+      "place": "Vienna",
+      "edition": "2"
+    },
+    "journal:journal": {
+      "title": "Journal of Testing",
+      "issue": "7",
+      "volume": "645",
+      "pages": "15-23",
+      "issn": "2077-9550"
+    },
+    "legacy:communities": [
+      "zenodo"
+    ],
+    "legacy:subjects": [
+      {
+        "term": "Physics",
+        "identifier": "Q413",
+        "scheme": "wikidata"
+      }
+    ],
+    "meeting:meeting": {
+      "acronym": "KITCH",
+      "dates": "21-22 November 2022",
+      "place": "Vienna",
+      "session": "VI",
+      "session_part": "1",
+      "title": "Kitchen Sink Meeting",
+      "url": "https://example.org/conf",
+      "identifiers": [
+        {
+          "identifier": "10.1234/conf",
+          "scheme": "doi"
+        }
+      ]
+    },
+    "mixs:0000012": [
+      "soil"
+    ],
+    "obo:RO_0002453": [
+      {
+        "subject": [
+          "taxon A"
+        ],
+        "object": [
+          "habitat B"
+        ]
+      }
+    ],
+    "openbiodiv:TaxonomicConceptLabel": [
+      "Aus bus"
+    ],
+    "thesis:thesis": {
+      "university": "TU Wien",
+      "department": "Informatics",
+      "type": "PhD",
+      "date_submitted": "2024-02-01",
+      "date_defended": "2024-06-15"
+    }
+  }
+}
