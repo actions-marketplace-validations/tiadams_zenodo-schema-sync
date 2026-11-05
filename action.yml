@@ -48,7 +48,7 @@ inputs:
 
 outputs:
   status:
-    description: One of in-sync, drift, missing, updated, created, created-version, duplicates.
+    description: One of in-sync, drift, missing, updated, created, created-version, duplicates, error.
     value: ${{ steps.run.outputs.status }}
   record-id:
     description: The Zenodo record id that was resolved or created.

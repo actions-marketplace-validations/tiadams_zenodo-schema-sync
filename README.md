@@ -183,7 +183,7 @@ and kept.
 | --- | --- |
 | `repository` | Repository URL anchor used to resolve the record. `.git` is stripped. Not inferred from the workflow, so set it here or pass the `repository` input. |
 | `record` / `concept` | Explicit record or concept (parent) id. Pick one; skips search. |
-| `version` | Release version, e.g. `v1.2.3`. Matched against `metadata.version`. Omit to target the latest version. |
+| `version` | Release version, e.g. `v1.2.3`. Matched against `metadata.version`, and written to it on `sync`. Omit to target the latest version and leave `metadata.version` as declared. |
 | `metadata` | Current-schema metadata. Strings are accepted for vocabulary ids: `"resource_type": "software"`. |
 | `custom_fields` | Current-schema custom fields: CodeMeta `code:*`, `journal:`, `meeting:`, `imprint:`, `thesis:`, `legacy:communities`, `obo:` and the domain vocabularies. `custom` is accepted as an alias. |
 | `access` | Optional `record`/`files` visibility (`public`/`restricted`) and embargo. |
@@ -258,7 +258,7 @@ cannot edit another user's deposit.
 
 | Mode | Writes | Exit codes |
 | --- | --- | --- |
-| `check` (default) | never | `0` in sync, `1` drift/missing/duplicates, `2` invalid config, `3` API error, `4` publish timeout |
+| `check` (default) | never | `0` in sync, `1` drift/missing/duplicates, `2` invalid config, `3` API error |
 | `sync` | create draft → merge → publish | `0` success (including already in sync), `1` duplicates, `2` invalid config, `3` API error, `4` publish timeout |
 
 - `sync --dry-run` prints the plan and writes nothing.
@@ -289,7 +289,9 @@ cannot edit another user's deposit.
 | `publish-timeout` | `300` | Seconds to wait for publication. |
 
 Outputs: `status` (`in-sync`, `drift`, `missing`, `updated`, `created`,
-`created-version`, `duplicates`), `record-id`, `record-url`.
+`created-version`, `duplicates`, or `error`), `record-id`, `record-url`.
+`record-id` and `record-url` are empty unless the run resolved or created a
+record.
 
 The Action runs on any Linux runner with `python3`, which includes all
 GitHub-hosted Ubuntu images.
