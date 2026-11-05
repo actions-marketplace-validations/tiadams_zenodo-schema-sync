@@ -1,5 +1,8 @@
 name: Zenodo metadata
 
+# Runs on the release event, so Zenodo's own GitHub integration must be off.
+# If it is on, drop `release` and trigger workflow_dispatch after Zenodo
+# archives the release; otherwise both race to create a deposit.
 on:
   release:
     types: [published]

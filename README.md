@@ -1,44 +1,68 @@
 # Zenodo schema sync
 
 [![CI](https://github.com/tiadams/zenodo-schema-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/tiadams/zenodo-schema-sync/actions/workflows/ci.yml)
-[![GitHub Marketplace](https://img.shields.io/badge/marketplace-Zenodo%20schema%20sync-blue?logo=github)](https://github.com/marketplace/actions/zenodo-schema-sync)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-A GitHub Action that declares a repository's [Zenodo](https://zenodo.org) record
-metadata in **Zenodo's current schema** — including the CodeMeta "Software"
-fields — and applies it to the record after every release.
+A GitHub Action that keeps a repository's [Zenodo](https://zenodo.org) record
+metadata complete after every release, including most of what the Zenodo deposit
+form supports but the GitHub integration silently drops.
 
 ## The problem
 
-Zenodo's GitHub integration only understands Zenodo's **legacy** metadata schema.
-It still archives releases, but anything a modern record can hold — CodeMeta
-`custom_fields`, subjects, dates, locations, funding, references — is discarded.
-
-The loss happens in one line,
-[`site/zenodo_rdm/github/release.py:41`](https://github.com/zenodo/zenodo-rdm/blob/master/site/zenodo_rdm/github/release.py#L41):
+Zenodo's GitHub integration archives releases, but it describes them with Zenodo's
+**legacy** schema only, and it keeps just part of what that schema produces.
+Zenodo's own legacy deserializer does build the modern `custom_fields`, `access`,
+and `pids` sections. Then
+[`site/zenodo_rdm/github/release.py:41`](https://github.com/zenodo/zenodo-rdm/blob/master/site/zenodo_rdm/github/release.py#L41)
+throws them away:
 
 ```python
 rdm_data = LegacySchema().load(legacy_data)
-return rdm_data["metadata"]        # "custom_fields" is dropped here
+return rdm_data["metadata"]        # custom_fields, access, pids never reach the record
 ```
 
-Declaring the fields in `.zenodo.json` does not help: the legacy schema excludes
-unknown keys, and CITATION.cff is ignored whenever `.zenodo.json` is present. So
-every GitHub-created release silently wipes hand-set CodeMeta fields, and no
-repository file can prevent it. If you have ever thought *"Zenodo wiped my
-CodeMeta fields again"*, this is why. Upstream has
-[no plans to fix it](#why-this-exists-and-when-it-goes-away).
+Keys the legacy schema does not know disappear one step earlier, because its
+`MetadataSchema` silently excludes them. So a `.zenodo.json` cannot carry most of
+what the deposit form supports, and `CITATION.cff` is ignored whenever
+`.zenodo.json` is present.
+
+What a hand-described record loses the next time a GitHub release is archived:
+
+| Field | After a GitHub release |
+| --- | --- |
+| Custom fields: CodeMeta `code:*`, `journal:`, `meeting:`, `imprint:`, `thesis:`, domain vocabularies | dropped with `custom_fields` |
+| Communities from `.zenodo.json` | ignored; existing parent membership is kept |
+| Access level and embargo | reset to public record and public files |
+| Reserved DOI from `.zenodo.json` | dropped with `pids` |
+| Subjects from EuroSciVoc, MeSH, GEMET | dropped; only free-text `keywords` are mapped |
+| Additional titles: subtitle, translated, alternative | dropped |
+| Publisher | replaced by the instance default |
+| Sizes, formats, copyright | dropped |
+| Locations | only `place`, `description` and a `lat`/`lon` point survive; polygons and GeoNames/Wikidata identifiers are lost |
+| Funding | funder and award ids survive; inline award titles and identifiers are lost |
+
+The fields the legacy mapper does understand (title, description, version,
+resource type, publication date, creators, contributors, license, language,
+dates, references, related identifiers, and free-text keywords) are re-derived
+rather than preserved, so their shapes are flattened too.
+
+Upstream has [no plans to fix it](#why-this-exists-and-when-it-goes-away).
 
 ## What it does
 
 You declare the fields you own in `.github/zenodo-sync.json`, in the **current**
 schema. The Action validates the declaration against the live Zenodo instance,
-then reads the existing draft, merges only the declared keys, and — in `sync`
-mode — publishes. Everything you did not declare is preserved byte-for-byte.
+then reads the existing draft and merges only the declared keys. In `sync` mode it
+publishes. Keys you do not declare are left as the draft has them.
 
-`check` is read-only and reports drift with a job summary and exit code.
-`sync` writes, and is idempotent: a matching record causes no draft and no new
-revision, so a repeated run performs no write.
+This restores the fields in the table above, with two exceptions: it does not
+reserve a DOI (an existing reservation is kept) and cannot create a community
+membership (join once in the record UI). It does not read `.zenodo.json` or
+`CITATION.cff`, so the declaration is the only source of truth for the keys it
+owns.
+
+`check` reports drift with a job summary and an exit code. `sync` is idempotent:
+a record that already matches causes no draft and no new revision.
 
 ```yaml
 - uses: tiadams/zenodo-schema-sync@v1
@@ -47,16 +71,15 @@ revision, so a repeated run performs no write.
     token: ${{ secrets.ZENODO_TOKEN }}
 ```
 
-The same engine runs locally, with no install step:
-
-```bash
-python3 scripts/zenodo_sync.py --mode check
-python3 scripts/zenodo_sync.py --mode sync
-```
-
 ## Quick start
 
-**1. Declare your metadata** in `.github/zenodo-sync.json`:
+**1. Create a token.** Make a Zenodo [personal access
+token](https://zenodo.org/account/settings/applications/tokens/new/) with the
+`deposit:write` and `deposit:actions` scopes. Add it to the repository as the
+`ZENODO_TOKEN` secret (`Settings → Secrets and variables → Actions`). `check`
+works anonymously against public records, so a token is only needed for `sync`.
+
+**2. Declare your metadata** in `.github/zenodo-sync.json`:
 
 ```json
 {
@@ -66,6 +89,7 @@ python3 scripts/zenodo_sync.py --mode sync
     "title": "Project",
     "resource_type": { "id": "software" },
     "publication_date": "2026-09-28",
+    "publisher": "Example Institute",
     "rights": [{ "id": "cc-by-4.0" }],
     "creators": [
       {
@@ -75,7 +99,13 @@ python3 scripts/zenodo_sync.py --mode sync
           "family_name": "Doe"
         }
       }
-    ]
+    ],
+    "subjects": ["Computer science", "Reproducibility"],
+    "additional_titles": [
+      { "title": "A reproducibility toolkit", "type": "subtitle" }
+    ],
+    "sizes": ["12 MB"],
+    "formats": ["application/zip"]
   },
   "custom_fields": {
     "code:codeRepository": "https://github.com/example/project",
@@ -85,7 +115,7 @@ python3 scripts/zenodo_sync.py --mode sync
 }
 ```
 
-**2. Add a workflow** — for example `.github/workflows/zenodo.yml`:
+**3. Add a workflow** — for example `.github/workflows/zenodo.yml`:
 
 ```yaml
 name: Zenodo metadata
@@ -113,29 +143,51 @@ jobs:
           token: ${{ secrets.ZENODO_TOKEN }}
 ```
 
-`check` is the default mode and is read-only, so it is safe to run on pull
-requests or a schedule. It writes a Job Summary with the exact per-field diff
-and exits non-zero when the record drifts or the release was never archived.
+This runs on the release event, so it assumes Zenodo's own GitHub integration is
+**off** for the repository. If it is on, see
+[Using it with Zenodo's GitHub integration](#using-it-with-zenodos-github-integration)
+for a race-free trigger.
+
+`check` is the default mode, so a job without `mode` is safe on pull requests and
+schedules: it writes a per-field diff to the job summary and exits non-zero when
+the record drifts or the release was never archived.
 
 A complete declaration is in
 [`examples/full-metadata.json`](examples/full-metadata.json); the machine-readable
 contract is [`schema/zenodo-sync.schema.json`](schema/zenodo-sync.schema.json).
 
+## Using it with Zenodo's GitHub integration
+
+Zenodo archives the release; the Action fills in the metadata afterwards. With a
+`version` set, it finds the record by `code:codeRepository` or by the GitHub
+`related_identifiers` entry Zenodo writes, so it works whether the integration
+created the record or the Action did. Without a version it falls back to
+`code:codeRepository` alone.
+
+Do not trigger the Action on the same `release: published` event as the
+integration. Both race to create the deposit, and if the Action wins Zenodo
+creates a second record moments later. Trigger the Action after the release
+instead, for example with `workflow_dispatch` and the tag as an input, or disable
+the integration and let the Action create the deposit from the config.
+
+If two records do get created, the Action detects the pair on its next run and
+fails with both ids rather than guessing.
+
 ## Declaring metadata
 
-Only keys present in the config are owned by the Action. Everything else —
-access, files, permissions, and any metadata key you do not declare — is merged
-from the existing draft and kept.
+Only keys present in the config are owned by the Action. Access, files,
+permissions and any metadata key you leave out are merged from the existing draft
+and kept.
 
 | Key | Notes |
 | --- | --- |
-| `repository` | Repository URL anchor used to resolve the record. `.git` is stripped. |
+| `repository` | Repository URL anchor used to resolve the record. `.git` is stripped. Not inferred from the workflow, so set it here or pass the `repository` input. |
 | `record` / `concept` | Explicit record or concept (parent) id. Pick one; skips search. |
-| `version` | Release version, e.g. `v1.2.3`. Matched against `metadata.version`. |
+| `version` | Release version, e.g. `v1.2.3`. Matched against `metadata.version`. Omit to target the latest version. |
 | `metadata` | Current-schema metadata. Strings are accepted for vocabulary ids: `"resource_type": "software"`. |
-| `custom_fields` | CodeMeta plus the `legacy:`, `journal:`, `meeting:`, `imprint:`, `thesis:`, `obo:` and domain namespaces. `custom` is accepted as an alias. |
+| `custom_fields` | Current-schema custom fields: CodeMeta `code:*`, `journal:`, `meeting:`, `imprint:`, `thesis:`, `legacy:communities`, `obo:` and the domain vocabularies. `custom` is accepted as an alias. |
 | `access` | Optional `record`/`files` visibility (`public`/`restricted`) and embargo. |
-| `files` | Optional `{ "enabled": true }`. Default enables files and uploads the tag archive on creation. |
+| `files` | Optional `{ "enabled": true }`. When omitted, an existing record keeps its current file setting, and a newly created one uploads the tag archive if the repository is on GitHub. |
 
 ### Metadata shapes
 
@@ -155,7 +207,11 @@ before writing:
   own ids. `award` is a Zenodo award id or an inline award with `number`,
   `title` and DOI/URL `identifiers`.
 - **References, subjects, formats, sizes.** Plain strings or current-schema
-  objects.
+  objects. Controlled-vocabulary subjects keep their `scheme` and `identifier`.
+- **Communities.** `legacy:communities` validates and stores community ids in
+  `custom_fields`, but Zenodo only turns that field into membership through its
+  legacy API. Join the community in the record's UI; the parent membership is
+  kept across versions.
 - **Dates.** EDTF strings (`2024-01-01`, `2020/2021`).
 - **Locations.** GeoJSON `Point` and `Polygon` features with
   `geonames`/`wikidata` identifiers. `MultiPoint` and `MultiPolygon` are
@@ -181,13 +237,22 @@ config.json.metadata.resource_type.id: unknown resource_type id 'softwear' (did 
 Validation covers resource types, licenses, languages, relation types, creator
 and contributor roles, date/description/title types, CodeMeta programming
 languages and development status, funders, awards, communities and affiliations.
-Zenodo requires `metadata.publisher` when registering a DOI, so a config that
-creates a new deposit must set it.
+Creating a new deposit (rather than updating an existing one) also requires
+`metadata.title`, `creators`, `resource_type`, `publication_date` and
+`publisher`; Zenodo requires a publisher when registering a DOI.
 
 Resolution order: explicit `record` → `concept` → search by
 `code:codeRepository` (and `metadata.related_identifiers`) plus `metadata.version`.
 Search uses `allversions=true`, so historical versions are found even though
 Zenodo's default search hides them.
+
+If `repository` is set, the resolved record must link to it through
+`code:codeRepository` or a GitHub `related_identifiers` entry, or the run refuses
+to modify it. To adopt an older record that predates the link, point at it with
+`record`/`concept` and drop `repository`, or add the link in the Zenodo UI first.
+
+If a token is used, it must belong to the account that owns the record. The Action
+cannot edit another user's deposit.
 
 ## Modes and safety
 
@@ -204,10 +269,11 @@ Zenodo's default search hides them.
   the release tag archive is downloaded, uploaded, and committed before
   publishing; if the tag archive is unavailable the run fails before any publish.
   For non-GitHub repositories the new version links the previous files instead.
-  Set `"files": {"enabled": false}` to skip files, in which case a new version
-  keeps the previous files.
+  The tag archive is fetched anonymously, so a private repository must set
+  `"files": {"enabled": false}`, which also makes a new version keep the previous
+  files.
 - Duplicate deposits for one version are reported with ids and URLs and exit
-  non-zero. The Action never deletes published records — only Zenodo support can.
+  non-zero. Published records are never deleted; only Zenodo support can do that.
 
 ## Inputs and outputs
 
@@ -225,9 +291,8 @@ Zenodo's default search hides them.
 Outputs: `status` (`in-sync`, `drift`, `missing`, `updated`, `created`,
 `created-version`, `duplicates`), `record-id`, `record-url`.
 
-The Action runs on any Linux runner with `python3` (all GitHub-hosted Ubuntu
-images qualify). It uses only the Python standard library, so there is no install
-step.
+The Action runs on any Linux runner with `python3`, which includes all
+GitHub-hosted Ubuntu images.
 
 ## Security
 
@@ -238,8 +303,8 @@ owns**. Treat it accordingly.
   accept the risk explicitly.
 - Do **not** use this Action with `pull_request_target` or `workflow_run`. Both
   can expose secrets to untrusted code. `workflow_dispatch` is strictly safer
-  than `release: published`; the release recipe above is fine because forks do
-  not fire release events and get no secrets.
+  than `release: published`; the release recipe above is safe from a secrets
+  standpoint because forks do not fire release events and get no secrets.
 - Do not run the job with `set -x`. The Action never echoes the token and scrubs
   it from error messages.
 - `check` works anonymously against public records, so it is safe to run on a
@@ -247,35 +312,10 @@ owns**. Treat it accordingly.
 
 See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
 
-## API caveats baked into this Action
-
-Verified against `zenodo.org` and the developer docs:
-
-- Send `Accept: application/vnd.inveniordm.v1+json`; the default representation
-  is the legacy shape. Custom fields are top-level `custom_fields`.
-- Concepts are not records. `GET /api/records/{concept}` redirects to the latest
-  version; versions are listed from a version id.
-- Anonymous pagination caps at 25 items; authenticated requests cap at 100.
-- Search hides non-latest versions unless `allversions=true`.
-- `PUT /api/records/{id}/draft` replaces the whole draft, so the Action always
-  reads the draft and merges before writing. Server-derived fields are stripped
-  from the payload because Zenodo rejects them on write.
-- A `2xx` response can still carry field errors; any `errors` entry other than
-  `files.enabled` aborts the run rather than being reported as success.
-
 ## Development
 
-Standard library only, no install step:
-
-```bash
-python3 -m unittest discover -s tests -v
-python3 scripts/zenodo_sync.py --config .github/zenodo-sync.json --mode check
-```
-
-The test suite is fully offline: `FakeClient` substitutes HTTP and fails if a
-`check` run performs any write.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to release a new version.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for running the tests locally, the API
+quirks the engine works around, and the release process.
 
 ## Why this exists, and when it goes away
 
@@ -294,4 +334,4 @@ old and unowned:
   2026-08-20) lists nothing on GitHub metadata or custom fields.
 
 This Action is a workaround with a shelf life. It should be deprecated the moment
-`invenio-vcs#9` ships, and this README should keep saying so.
+`invenio-vcs#9` ships.

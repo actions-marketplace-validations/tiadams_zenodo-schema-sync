@@ -6,6 +6,7 @@
     "title": "Project",
     "resource_type": { "id": "software" },
     "publication_date": "2026-09-28",
+    "publisher": "Example Institute",
     "rights": [{ "id": "cc-by-4.0" }],
     "creators": [
       {
@@ -15,7 +16,13 @@
           "family_name": "Doe"
         }
       }
-    ]
+    ],
+    "subjects": ["Computer science", "Reproducibility"],
+    "additional_titles": [
+      { "title": "A reproducibility toolkit", "type": "subtitle" }
+    ],
+    "sizes": ["12 MB"],
+    "formats": ["application/zip"]
   },
   "custom_fields": {
     "code:codeRepository": "https://github.com/example/project",

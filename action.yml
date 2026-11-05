@@ -1,7 +1,7 @@
 name: Zenodo schema sync
 description: >-
-  Apply current-schema metadata (CodeMeta custom fields and modern metadata) to
-  a Zenodo record after a release.
+  Keep a Zenodo record's current-schema metadata and custom fields complete after
+  a GitHub release.
 author: Tim Adams
 branding:
   icon: refresh-cw
